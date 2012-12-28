@@ -13,6 +13,8 @@ import yaml
 import feedparser
 from helpers import to_datetime
 
+DATE_BET_STARTED = datetime.datetime(year=2011,month=3,day=21)
+
 class Member(object):
     def __init__(self, member_dic):
         self.id = member_dic['id']
@@ -21,6 +23,7 @@ class Member(object):
         self.blog = member_dic['blog']
         self.feed = member_dic['feed']
         self.twitter = member_dic['twitter']
+        self.date_joined = member_dic['date_joined']
 
     @property
     def posts(self):
@@ -34,18 +37,19 @@ class Member(object):
         
     def fetch_entries(self):
         from posts import BlogPost
-		
+        print "fetching entries for: %s" % self.name
         try:
             feed_posts = feedparser.parse(self.feed)['items']
             for p in feed_posts:
                 if p['id'] not in self.post_id_list:
                     dt_published = to_datetime(p['updated_parsed'])
-                    post = BlogPost(
-                        email = self.email, title = p['title'],
-                        link = p['link'], id_post = p['id'],
-                        date_post = dt_published, date_updated = dt_published,
-                        excerpt = p['summary'], content = p.get('summary', '') )
-                    post.save()
+                    if dt_published > self.date_joined:
+                        post = BlogPost(
+                            email = self.email, title = p['title'],
+                            link = p['link'], id_post = p['id'],
+                            date_post = dt_published, date_updated = dt_published,
+                            excerpt = p['summary'], content = p.get('summary', '') )
+                        post.save()
         except:
             print 
 
